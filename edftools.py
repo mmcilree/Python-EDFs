@@ -1,5 +1,5 @@
 # Get the difference between elements either as numbers or tuples
-def difference(el1, el2, mod):
+def difference_mod(el1, el2, mod):
     if type(el1) is tuple and type(el2) is tuple:
         res = ()
         for i in range(0, len(el1)):
@@ -8,7 +8,9 @@ def difference(el1, el2, mod):
     else:
         return (el1 - el2) % mod
 
-
+def difference_mult(el1, el2, mult):
+    # TODO
+    pass  
 # Get all the external differences between sets as a dict
 def get_ed(sets, modulus):
     results = {}
@@ -19,7 +21,7 @@ def get_ed(sets, modulus):
                     for el2 in sets[j]:
                         results[
                             tuple([el1, el2])
-                        ] = difference(el1, el2, modulus)
+                        ] = difference_mod(el1, el2, modulus)
     return results
 
 # Get all the external differences between one set and a set of other sets 
@@ -32,7 +34,7 @@ def get_ed_from_set(from_set, to_sets, modulus):
             for el2 in to_sets[j]:
                 results[
                     tuple([el1, el2])
-                ] = difference(el1, el2, modulus)
+                ] = difference_mod(el1, el2, modulus)
 
     return results
 
@@ -79,7 +81,13 @@ def is_edf(sets, modulus):
         return False
 
     ed = get_ed(sets, modulus)
-    counts = [sum([v == val for v in ed.values()]) for val in ed.values()]
+    counts = [sum([v == val for v in ed.values()]) for val in range(1, modulus)]
+    
+    return all_equal(counts)
+
+def is_overlapping_edf(sets, modulus):
+    ed = get_ed(sets, modulus)
+    counts = [sum([v == val for v in ed.values()]) for val in range(1, modulus) if val != 0]
 
     return all_equal(counts)
 
@@ -91,7 +99,7 @@ def is_sedf(sets, modulus):
     overall_counts = []
     for i in range(0, len(sets)):
         ed = get_ed_from_set(sets[i], sets[0:i] + sets[i+1:len(sets)], modulus)
-        counts = [sum([v == val for v in ed.values()]) for val in ed.values()]
+        counts = [sum([v == val for v in ed.values()]) for val in range(1, modulus)]
         if not all_equal(counts):
             return False
         overall_counts.append(counts)
