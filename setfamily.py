@@ -1,14 +1,14 @@
 from utils import all_equal
 import itertools
 
-
 class SetFamily:
-    def __init__(self, sets, group_table, inverses=None):
+    def __init__(self, sets, group_table, inverses=None, elstr=None):
         self.n = len(group_table)
         self.sets = sets
         self.m = len(sets)
         self.group_table = group_table
         self.inverses = inverses or self.get_inverses()
+        self.elstr=elstr
 
     def get_inverses(self):
         """Create a table of inverses for each element"""
@@ -77,7 +77,7 @@ class SetFamily:
 
     def el_as_str(self, el):
         """String representation of element: may be overridden in subclasses."""
-        return str(el)
+        return self.elstr[el] if self.elstr else str(el)
 
     def print_external_differences(
         self, sort_by=None, headings=None, latex=True, perline=5
@@ -108,6 +108,26 @@ class SetFamily:
             if count % perline == 0:
                 print("\\\\" if latex else "")
         print()
+    
+    def print_external_differences_tables(self):
+        for i in range(self.m):
+            for j in range(self.m):
+                if i != j:
+                    ed = self.external_differences(i, j)
+                    print("\\begin{array}{ c|" + "c"*len(self.sets[i])+ " }")
+                    print(R"\times (\;\cdot\;)^{-1} & \\")
+                    print(" & ", end="")
+                    [print(self.el_as_str(el), end=" & ") for el in self.sets[i]]
+                    print(R"\\")
+                    print(R"\hline")
+                    for el2 in self.sets[j]:
+                        print(self.el_as_str(el2), end=" & ")
+                        for el1 in self.sets[i]:
+                            print(self.el_as_str(ed[(el1, el2)]), end=" & ")
+                        print(R"\\")
+                    print(R"\end{array}")
+                    print("")
+                    
 
 
 class CyclicSetFamily(SetFamily):
@@ -133,7 +153,8 @@ class CyclicProductSetFamily(SetFamily):
             mod = [mod for _ in range(len(sets[0][0]))]
 
         groups = [range(m) for m in mod]
-        elements = list(itertools.product(*groups))
+        self.elements = list(itertools.product(*groups))
+        elements = self.elements
         sets = [list(map(elements.index, s)) for s in sets]
 
         group_table = [
@@ -191,3 +212,6 @@ if __name__ == "__main__":
     )
     print(test2.is_edf())  # True
     print(test2.is_sedf())  # False
+
+
+
