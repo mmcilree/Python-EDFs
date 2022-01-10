@@ -1,6 +1,7 @@
 from utils import all_equal
 import itertools
 
+
 class SetFamily:
     def __init__(self, sets, group_table, inverses=None, elstr=None):
         self.n = len(group_table)
@@ -8,7 +9,7 @@ class SetFamily:
         self.m = len(sets)
         self.group_table = group_table
         self.inverses = inverses or self.get_inverses()
-        self.elstr=elstr
+        self.elstr = elstr
 
     def get_inverses(self):
         """Create a table of inverses for each element"""
@@ -39,9 +40,27 @@ class SetFamily:
 
     def is_edf(self):
         """Check if this set family is an External Difference Family"""
-        if not all_equal([len(s) for s in self.sets]):
-            return False
+        return self.has_equal_set_size() and self.has_disjoint_sets and self.is_oedf()
 
+    def is_sedf(self):
+        """Check if this set family is a Strong External Difference Family"""
+        return self.has_equal_set_size() and self.has_disjoint_sets and self.is_osedf()
+
+    def has_equal_set_size(self):
+        """Check if all the sets are the same size"""
+        return all_equal([len(s) for s in self.sets])
+
+    def has_disjoint_sets(self):
+        """Check if all the sets are disjoint (empty intersection)"""
+        return len(list(set([x for s in self.sets for x in s]))) == sum(
+            [len(s) for s in self.sets]
+        )
+
+    def is_oedf(self):
+        """
+            An OEDF is an External Difference family without the sets being 
+            necessarily disjoint or equal length
+        """
         all_ext_diffs = {}
         for i in range(self.m):
             for j in range(self.m):
@@ -55,13 +74,14 @@ class SetFamily:
 
         return all_equal(counts)
 
-    def is_sedf(self):
-        """Check if this set family is a Strong External Difference Family"""
-        if not all_equal([len(s) for s in self.sets]):
-            return False
-
+    def is_osedf(self):
+        """
+            Likewise an OSEDF is a Strong External Difference family without the
+            sets being necessarily disjoint or equal length
+        """
         all_counts = []
         for i in range(self.m):
+            count_sums = [0 for _ in range(1, self.n)]
             for j in range(self.m):
                 if i != j:
                     ext_diffs = self.external_differences(i, j)
@@ -71,7 +91,10 @@ class SetFamily:
                         for val in range(1, self.n)
                     ]
 
-                    all_counts.append(counts)
+                    count_sums = [
+                        count_sums[i] + counts[i] for i in range(0, self.n - 1)
+                    ]
+            all_counts.append(count_sums)
 
         return all_equal(all_counts)
 
@@ -108,16 +131,19 @@ class SetFamily:
             if count % perline == 0:
                 print("\\\\" if latex else "")
         print()
-    
+
     def print_external_differences_tables(self):
         for i in range(self.m):
             for j in range(self.m):
                 if i != j:
                     ed = self.external_differences(i, j)
-                    print("\\begin{array}{ c|" + "c"*len(self.sets[i])+ " }")
+                    print("\\begin{array}{ c|" + "c" * len(self.sets[i]) + " }")
                     print(R"\times (\;\cdot\;)^{-1} & \\")
                     print(" & ", end="")
-                    [print(self.el_as_str(el), end=" & ") for el in self.sets[i]]
+                    [
+                        print(self.el_as_str(el), end=" & ")
+                        for el in self.sets[i]
+                    ]
                     print(R"\\")
                     print(R"\hline")
                     for el2 in self.sets[j]:
@@ -127,11 +153,11 @@ class SetFamily:
                         print(R"\\")
                     print(R"\end{array}")
                     print("")
-                    
 
 
 class CyclicSetFamily(SetFamily):
     """Represent a family of sets with elements from the cyclic group Z_n"""
+
     def __init__(self, sets, mod):
         group_table = [[(i + j) % mod for i in range(mod)] for j in range(mod)]
         inverses = [(-i) % mod for i in range(mod)]
@@ -142,14 +168,15 @@ class CyclicSetFamily(SetFamily):
 
 class CyclicProductSetFamily(SetFamily):
     """
-        Represent a family of sets with elements from a direct product of cyclic
-        groups Z_a1 x Z_a2 x ... Z_ak
+    Represent a family of sets with elements from a direct product of cyclic
+    groups Z_a1 x Z_a2 x ... Z_ak
     """
+
     def __init__(self, sets, mod):
         """Expect sets of tuples for initialisation."""
         if type(mod) is not list:
-            # If a single integer is given as mod, assume all groups in the 
-            # product have that size. 
+            # If a single integer is given as mod, assume all groups in the
+            # product have that size.
             mod = [mod for _ in range(len(sets[0][0]))]
 
         groups = [range(m) for m in mod]
@@ -173,7 +200,9 @@ class CyclicProductSetFamily(SetFamily):
         ]
 
         inverses = [
-            elements.index(tuple([-elements[i][k] % mod[k] for k in range(len(mod))]))
+            elements.index(
+                tuple([-elements[i][k] % mod[k] for k in range(len(mod))])
+            )
             for i in range(len(elements))
         ]
 
@@ -212,6 +241,3 @@ if __name__ == "__main__":
     )
     print(test2.is_edf())  # True
     print(test2.is_sedf())  # False
-
-
-
