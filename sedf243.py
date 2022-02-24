@@ -71,8 +71,9 @@ print("SEDF as vector? " + str(vsedf.is_sedf()))
 
 # print(sedf.is_sedf())
 # sedf.print_external_differences_tables()
-
-im = [list(set([tuple([el_as_vector[x][0], el_as_vector[x][1]]) for x in s])) for s in sets]
-imfamily = CyclicProductSetFamily(im, mod=3)
-print(imfamily.is_edf())
-print(imfamily.is_sedf())
+for i in range(0, 21):
+  im = [list(set([tuple(el_as_vector[x][0:i]) for x in s])) for s in sets]
+  print("--")
+  imfamily = CyclicProductSetFamily(im, mod=3)
+  print("OEDF? " + str(imfamily.is_oedf()))
+  print("OSEDF? " + str(imfamily.is_osedf()))

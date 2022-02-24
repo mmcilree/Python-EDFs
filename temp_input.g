@@ -1,0 +1,1 @@
+MultiplicationTable(SmallGroup(6, 1));
